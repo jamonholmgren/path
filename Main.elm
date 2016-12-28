@@ -4,6 +4,7 @@ import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Time exposing (Time, millisecond)
+import Array
 
 
 main : Program Never Model Msg
@@ -39,6 +40,7 @@ type alias Character =
     , y : Int
     , targetX : Int
     , targetY : Int
+    , targetPath : Path
     }
 
 
@@ -46,6 +48,10 @@ type alias Model =
     { arena : Arena
     , character : Character
     }
+
+
+type alias Path =
+    List { x : Int, y : Int }
 
 
 
@@ -68,7 +74,7 @@ init =
 initArena : Arena
 initArena =
     [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 2, Gr 1, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Wall, Wall, Gr 2, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 2, Gr 1, Wall ]
@@ -80,7 +86,12 @@ initArena =
 
 initCharacter : Character
 initCharacter =
-    { x = 1, y = 2, targetX = 6, targetY = 1 }
+    { x = 1
+    , y = 2
+    , targetX = 1
+    , targetY = 2
+    , targetPath = [ { x = 2, y = 2 }, { x = 3, y = 3 } ]
+    }
 
 
 
@@ -88,20 +99,33 @@ initCharacter =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({ character } as model) =
+update msg ({ character, arena } as model) =
     case msg of
         Advance _ ->
             let
+                -- TODO: Implement path-following algorithm
                 char =
-                    { character
-                        | x = (character.x + (sign (character.targetX - character.x)))
-                        , y = (character.y + (sign (character.targetY - character.y)))
-                    }
+                    case character.targetPath of
+                        [] ->
+                            character
+
+                        step :: remainingPath ->
+                            { character
+                                | x = (character.x + (sign (step.x - character.x)))
+                                , y = (character.y + (sign (step.y - character.y)))
+                                , targetPath = remainingPath
+                            }
             in
                 ( { model | character = char }, Cmd.none )
 
-        SetTarget row col ->
-            ( { model | character = { character | targetX = col, targetY = row } }, Cmd.none )
+        SetTarget x y ->
+            let
+                newPath =
+                    pathFind character.x character.y x y arena
+
+                -- TODO
+            in
+                ( { model | character = { character | targetX = x, targetY = y, targetPath = newPath } }, Cmd.none )
 
 
 
@@ -140,7 +164,7 @@ arenaRowView index row =
 
 arenaBlockView : Int -> Int -> Terrain -> Html Msg
 arenaBlockView row col terr =
-    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget row col)) ] [ text (blockLabel row col terr) ]
+    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
 
 
 characterView : Character -> List (Html Msg)
@@ -251,3 +275,67 @@ sign num =
 positionInPx : number -> String
 positionInPx position =
     toString (position * 100) ++ "px"
+
+
+type PathNode
+    = PathNode
+        { x : Int
+        , y : Int
+        , cameFrom : Maybe PathNode
+        , cost : Float
+        }
+
+
+pathFind : Int -> Int -> Int -> Int -> Arena -> Path
+pathFind cx cy x y arena =
+    let
+        cameFrom =
+            []
+
+        openSet =
+            []
+
+        origin =
+            PathNode { x = cx, y = cy, cameFrom = Nothing, cost = 0 }
+
+        neighbors =
+            nodeNeighbors origin arena
+    in
+        []
+
+
+nodeNeighbors : PathNode -> Arena -> List PathNode
+nodeNeighbors node arena =
+    List.map2 (checkNode node arena) [ -1, 0, 1 ] [ -1, 0, 1 ]
+
+
+checkNode : PathNode -> Arena -> ( Int, Int ) -> Maybe PathNode
+checkNode node arena offset =
+    case offset of
+        ( 0, 0 ) ->
+            Nothing
+
+        ( x, y ) ->
+            let
+                actualX =
+                    node.x + x
+
+                actualY =
+                    node.y + y
+
+                actualNode =
+                    arenaNode arena actualX actualY
+            in
+                Just []
+
+
+arenaNode : Arena -> Int -> Int -> Maybe Terrain
+arenaNode arena x y =
+    let
+        arenaArray =
+            Array.fromList (List.map Array.fromList arena)
+
+        row =
+            Array.get y arenaArray
+    in
+        Maybe.map (Array.get x) row
