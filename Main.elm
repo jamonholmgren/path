@@ -306,7 +306,7 @@ pathFind cx cy x y arena =
 
 nodeNeighbors : PathNode -> Arena -> List PathNode
 nodeNeighbors node arena =
-    List.map2 (checkNode node arena) [ -1, 0, 1 ] [ -1, 0, 1 ]
+    List.filterMap (checkNode node arena) (List.map2 (,) [ -1, 0, 1 ] [ -1, 0, 1 ])
 
 
 checkNode : PathNode -> Arena -> ( Int, Int ) -> Maybe PathNode
@@ -318,15 +318,15 @@ checkNode node arena offset =
         ( x, y ) ->
             let
                 actualX =
-                    node.x + x
+                    (getPathNodeX node) + x
 
                 actualY =
-                    node.y + y
+                    (getPathNodeY node) + y
 
                 actualNode =
                     arenaNode arena actualX actualY
             in
-                Just []
+                Nothing
 
 
 arenaNode : Arena -> Int -> Int -> Maybe Terrain
@@ -338,4 +338,18 @@ arenaNode arena x y =
         row =
             Array.get y arenaArray
     in
-        Maybe.map (Array.get x) row
+        Maybe.andThen (Array.get x) row
+
+
+getPathNodeX : PathNode -> Int
+getPathNodeX pathNode =
+    case pathNode of
+        PathNode p ->
+            p.x
+
+
+getPathNodeY : PathNode -> Int
+getPathNodeY pathNode =
+    case pathNode of
+        PathNode p ->
+            p.y
