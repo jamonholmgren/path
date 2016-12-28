@@ -2,7 +2,7 @@ module Main exposing (..)
 
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
--- import Html.Events exposing (onClick)
+import Html.Events exposing (onClick)
 import Time exposing (Time, millisecond)
 
 main : Program Never Model Msg
@@ -14,8 +14,9 @@ main =
     , view = view
     }
 
-type Msg =
-  Advance Time
+type Msg
+  = Advance Time
+  | SetTarget Int Int
 
 type Terrain
   = Wall
@@ -74,6 +75,8 @@ update msg ({character} as model) =
           }
       in
         ({ model | character = char }, Cmd.none)
+    SetTarget row col ->
+      ({ model | character = { character | targetX = col, targetY = row } }, Cmd.none)
 
 -- Main subscriptions
 
@@ -91,21 +94,23 @@ view model =
 
 -- View components
 
-arenaView : Arena -> List (Html msg)
+arenaView : Arena -> List (Html Msg)
 arenaView rows =
   List.concat (List.indexedMap arenaRowView rows)
 
-arenaRowView : Int -> List Terrain -> List (Html msg)
+arenaRowView : Int -> List Terrain -> List (Html Msg)
 arenaRowView index row =
   List.indexedMap (arenaBlockView index) row
 
-arenaBlockView : Int -> Int -> Terrain -> Html msg
+arenaBlockView : Int -> Int -> Terrain -> Html Msg
 arenaBlockView row col terr =
-  div [ style (blockStyle (terrainColor terr)) ] [ text (blockLabel row col terr) ]
+  div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget row col)) ] [ text (blockLabel row col terr) ]
 
-characterView : Character -> List (Html msg)
+characterView : Character -> List (Html Msg)
 characterView char =
-  [ (div [ style (characterStyle char) ] []) ]
+  [ div [ style (characterStyle char) ] []
+  , div [ style (targetStyle char) ] []
+  ]
 
 -- View styles
 
@@ -162,6 +167,20 @@ characterStyle char =
   , ("boxShadow", "2px 2px 4px 1px salmon")
   , ("transition", "top 1s, left 1s")
   ]
+
+targetStyle : Character -> List (String, String)
+targetStyle char =
+  [ ("width", "20px")
+  , ("height", "20px")
+  , ("margin", "40px")
+  , ("position", "absolute")
+  , ("left", (toString (char.targetX * 100)) ++ "px")
+  , ("top", (toString (char.targetY * 100)) ++ "px")
+  , ("backgroundColor", "lightcoral")
+  , ("borderRadius", "3px")
+  , ("boxShadow", "2px 2px 4px 1px gray")
+  ]
+
 
   -- Utility functions
 
