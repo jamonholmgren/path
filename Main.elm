@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Html exposing (Html, div)
+import Html.Attributes exposing (style)
 -- import Html.Events exposing (onClick)
 
 main : Program Never Model Msg
@@ -30,15 +31,17 @@ type alias Model =
   , character : Character
   }
 
+-- 8x8 arena map
 initArena : Arena
 initArena =
-  [ [ Wall, Wall, Wall, Wall, Wall ]
-  , [ Wall, Gr 1, Gr 1, Gr 1, Wall ]
-  , [ Wall, Gr 1, Gr 1, Gr 1, Wall ]
-  , [ Wall, Wall, Wall, Gr 1, Wall ]
-  , [ Wall, Gr 1, Wall, Gr 1, Wall ]
-  , [ Wall, Gr 1, Gr 1, Gr 1, Wall ]
-  , [ Wall, Wall, Wall, Wall, Wall ]
+  [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
+  , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+  , [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
   ]
 
 initCharacter : Character
@@ -48,8 +51,8 @@ initCharacter =
 init : ( Model, Cmd Msg )
 init =
   ({ arena = initArena
-  , character = initCharacter
-  }, Cmd.none)
+   , character = initCharacter
+   }, Cmd.none)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -59,6 +62,10 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.none
 
+containerStyle : List (String, String)
+containerStyle =
+  [ ("width", "800px"), ("height", "600px"), ("backgroundColor", "gray") ]
+
 view : Model -> Html.Html Msg
 view model =
-  div [] []
+  div [ style containerStyle ] []
