@@ -8,7 +8,7 @@ pathfinding algorithm in Elm.
 
 By Jamon Holmgren and Chris Krycho, December 2016
 
-Live coding date/time: Thursday, December 29 at 2 PM Pacific
-Link to live coding: TBA
+Live coding date/time: Thursday, December 29 at 1 PM Pacific, 4 PM Eastern
+Link to live coding: https://www.youtube.com/watch?v=s8dH7k0Zggo&feature=youtu.be&t=820
 
 License: MIT
