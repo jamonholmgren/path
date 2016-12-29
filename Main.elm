@@ -286,6 +286,11 @@ type PathNode
         }
 
 
+emptyPathNode : PathNode
+emptyPathNode =
+    PathNode { x = 0, y = 0, cameFrom = Nothing, cost = 9999 }
+
+
 pathFind : Int -> Int -> Int -> Int -> Arena -> Path
 pathFind cx cy x y arena =
     let
@@ -295,50 +300,61 @@ pathFind cx cy x y arena =
         openSet =
             [ PathNode { x = cx, y = cy, cameFrom = Nothing, cost = 0 } ]
 
-        finalPath = openSet closed arena
+        finalPath =
+            exploreNodes openSet closedSet arena
 
         -- activeNodes =
         --     exploreNode x y exploredNodes arena origin
-
-    in
-
-
-exploreNodes : List PathNode -> List PathNode -> Arena -> Path
-exploreNodes openSet exploredNodes arena =
-    let
-        currentNodes =
-
-
-        neighbors - filter out the ones that aren't shorter
-        remove me from currently exploring list
-        add me to already explored list
-        add neighbors to currently exploring list
-        select the smallest cost in currently exploring list
-        get it's neighbors & repeat
-
-
-
-        neighbors =
-            nodeNeighbors origin arena
-
-
-        activeNeighbors =
-            List.filter (shortestNeighbor exploredNodes)
-
-        newExploredNodes =
-            exploredNodes ++ neighbors
-
-        -- which neighbors are already in exploredNodes
-        -- compare the new cost (neighbor) to already explored in exploredNodes
-
-
-
-
     in
         []
 
 
+lowestCostNode : List PathNode -> PathNode -> PathNode
+lowestCostNode closedSet node =
+    let
+        matchingNode =
+            closedSet
+                |> List.filter (\n -> (n.x == (getPathNodeX node)) && (n.y == (getPathNodeY node)))
+                |> List.head
+    in
+        case matchingNode of
+            Nothing ->
+                node
 
+            PathNode n ->
+                if n.cost > (getPathNode node).cost then
+                    Just n
+                else
+                    node
+
+
+exploreNodes : List PathNode -> List PathNode -> Arena -> Path
+exploreNodes openSet closedSet arena =
+    let
+        origin =
+            List.sortBy .cost openSet
+                |> List.head
+                |> Maybe.withDefault emptyPathNode
+
+        neighbors =
+            (nodeNeighbors origin arena)
+                |> List.filterMap (lowestCostNode closedSet)
+
+        -- neighbors - filter out the ones that aren't shorter
+        -- remove me from currently exploring list
+        -- add me to already explored list
+        -- add neighbors to currently exploring list
+        -- select the smallest cost in currently exploring list
+        -- get it's neighbors & repeat
+        -- activeNeighbors =
+        --     List.filter (shortestNeighbor exploredNodes)
+        --
+        -- newExploredNodes =
+        --     exploredNodes ++ neighbors
+        -- which neighbors are already in exploredNodes
+        -- compare the new cost (neighbor) to already explored in exploredNodes
+    in
+        []
 
 
 nodeNeighbors : PathNode -> Arena -> List PathNode
@@ -393,8 +409,16 @@ arenaTerrain arena x y =
         Maybe.andThen (Array.get x) row
 
 
+getPathNode : PathNode -> { x : Int, y : Int, cameFrom : Maybe PathNode, cost : Float }
+getPathNode ((PathNode { x, y, cost, cameFrom }) as node) =
+    { x = x, y = y, cost = cost, cameFrom = cameFrom }
+
+
 getPathNodeX : PathNode -> Int
-getPathNodeX (PathNode {x}) = x
+getPathNodeX (PathNode { x }) =
+    x
+
 
 getPathNodeY : PathNode -> Int
-getPathNodeY (PathNode {y}) = y
+getPathNodeY (PathNode { y }) =
+    y
