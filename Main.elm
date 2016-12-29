@@ -90,7 +90,7 @@ initCharacter =
     , y = 2
     , targetX = 1
     , targetY = 2
-    , targetPath = [ { x = 2, y = 2 }, { x = 3, y = 3 } ]
+    , targetPath = []
     }
 
 
@@ -289,19 +289,56 @@ type PathNode
 pathFind : Int -> Int -> Int -> Int -> Arena -> Path
 pathFind cx cy x y arena =
     let
-        cameFrom =
+        closedSet =
             []
 
         openSet =
-            []
+            [ PathNode { x = cx, y = cy, cameFrom = Nothing, cost = 0 } ]
 
-        origin =
-            PathNode { x = cx, y = cy, cameFrom = Nothing, cost = 0 }
+        finalPath = openSet closed arena
+
+        -- activeNodes =
+        --     exploreNode x y exploredNodes arena origin
+
+    in
+
+
+exploreNodes : List PathNode -> List PathNode -> Arena -> Path
+exploreNodes openSet exploredNodes arena =
+    let
+        currentNodes =
+
+
+        neighbors - filter out the ones that aren't shorter
+        remove me from currently exploring list
+        add me to already explored list
+        add neighbors to currently exploring list
+        select the smallest cost in currently exploring list
+        get it's neighbors & repeat
+
+
 
         neighbors =
             nodeNeighbors origin arena
+
+
+        activeNeighbors =
+            List.filter (shortestNeighbor exploredNodes)
+
+        newExploredNodes =
+            exploredNodes ++ neighbors
+
+        -- which neighbors are already in exploredNodes
+        -- compare the new cost (neighbor) to already explored in exploredNodes
+
+
+
+
     in
         []
+
+
+
 
 
 nodeNeighbors : PathNode -> Arena -> List PathNode
@@ -323,14 +360,29 @@ checkNode node arena offset =
                 actualY =
                     (getPathNodeY node) + y
 
-                actualNode =
-                    arenaNode arena actualX actualY
+                actualTerrain =
+                    arenaTerrain arena actualX actualY
             in
-                Nothing
+                case actualTerrain of
+                    Nothing ->
+                        Nothing
+
+                    Just Wall ->
+                        Nothing
+
+                    Just (Gr n) ->
+                        Just
+                            (PathNode
+                                { x = actualX
+                                , y = actualY
+                                , cameFrom = Nothing
+                                , cost = n
+                                }
+                            )
 
 
-arenaNode : Arena -> Int -> Int -> Maybe Terrain
-arenaNode arena x y =
+arenaTerrain : Arena -> Int -> Int -> Maybe Terrain
+arenaTerrain arena x y =
     let
         arenaArray =
             Array.fromList (List.map Array.fromList arena)
@@ -342,14 +394,7 @@ arenaNode arena x y =
 
 
 getPathNodeX : PathNode -> Int
-getPathNodeX pathNode =
-    case pathNode of
-        PathNode p ->
-            p.x
-
+getPathNodeX (PathNode {x}) = x
 
 getPathNodeY : PathNode -> Int
-getPathNodeY pathNode =
-    case pathNode of
-        PathNode p ->
-            p.y
+getPathNodeY (PathNode {y}) = y
