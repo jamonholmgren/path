@@ -277,18 +277,22 @@ positionInPx position =
     toString (position * 100) ++ "px"
 
 
-type PathNode
-    = PathNode
-        { x : Int
-        , y : Int
-        , cameFrom : Maybe PathNode
-        , cost : Float
-        }
+type alias PathNode =
+    { x : Int
+    , y : Int
+    , cameFrom : PathTree
+    , cost : Float
+    }
+
+
+type PathTree
+    = Empty
+    | Predecessor PathNode
 
 
 emptyPathNode : PathNode
 emptyPathNode =
-    PathNode { x = 0, y = 0, cameFrom = Nothing, cost = 9999 }
+    { x = 0, y = 0, cameFrom = Empty, cost = 9999 }
 
 
 pathFind : Int -> Int -> Int -> Int -> Arena -> Path
@@ -298,63 +302,69 @@ pathFind cx cy x y arena =
             []
 
         openSet =
-            [ PathNode { x = cx, y = cy, cameFrom = Nothing, cost = 0 } ]
+            [ { x = cx, y = cy, cameFrom = Empty, cost = 0 } ]
 
-        finalPath =
+        exploredNodes =
             exploreNodes openSet closedSet arena
-
-        -- activeNodes =
-        --     exploreNode x y exploredNodes arena origin
     in
-        []
+        tracePathBack cx cy x y exploredNodes
 
 
-lowestCostNode : List PathNode -> PathNode -> PathNode
-lowestCostNode closedSet node =
+tracePathBack : Int -> Int -> Int -> Int -> List PathNode -> Path
+tracePathBack cx cy x y exploredNodes =
+    -- TODO: figure out if x and y are in current explored nodes,
+    -- which means we found the target
+    -- Then trace it back to the cx cy
+    []
+
+
+lowestCostNode : List PathNode -> PathNode -> Maybe PathNode
+lowestCostNode closedSet neighborNode =
     let
         matchingNode =
             closedSet
-                |> List.filter (\n -> (n.x == (getPathNodeX node)) && (n.y == (getPathNodeY node)))
+                |> List.filter (\n -> (n.x == neighborNode.x) && (n.y == neighborNode.y))
                 |> List.head
     in
         case matchingNode of
             Nothing ->
-                node
+                Just neighborNode
 
-            PathNode n ->
-                if n.cost > (getPathNode node).cost then
-                    Just n
+            Just n ->
+                if n.cost > neighborNode.cost then
+                    Just neighborNode
                 else
-                    node
+                    Nothing
 
 
-exploreNodes : List PathNode -> List PathNode -> Arena -> Path
+exploreNodes : List PathNode -> List PathNode -> Arena -> List PathNode
 exploreNodes openSet closedSet arena =
     let
+        -- select the smallest cost in currently exploring list
         origin =
             List.sortBy .cost openSet
                 |> List.head
                 |> Maybe.withDefault emptyPathNode
 
+        -- neighbors - filter out the ones that aren't shorter
         neighbors =
             (nodeNeighbors origin arena)
                 |> List.filterMap (lowestCostNode closedSet)
 
-        -- neighbors - filter out the ones that aren't shorter
         -- remove me from currently exploring list
-        -- add me to already explored list
         -- add neighbors to currently exploring list
-        -- select the smallest cost in currently exploring list
-        -- get it's neighbors & repeat
-        -- activeNeighbors =
-        --     List.filter (shortestNeighbor exploredNodes)
-        --
-        -- newExploredNodes =
-        --     exploredNodes ++ neighbors
-        -- which neighbors are already in exploredNodes
-        -- compare the new cost (neighbor) to already explored in exploredNodes
+        newOpenSet =
+            (List.filter (\n -> (n.x /= origin.x) || (n.y /= origin.y)) openSet)
+                ++ neighbors
+
+        -- add me to already explored list
+        newClosedSet =
+            origin :: closedSet
     in
-        []
+        if List.length openSet > 0 then
+            exploreNodes newOpenSet newClosedSet arena
+        else
+            newClosedSet
 
 
 nodeNeighbors : PathNode -> Arena -> List PathNode
@@ -371,10 +381,10 @@ checkNode node arena offset =
         ( x, y ) ->
             let
                 actualX =
-                    (getPathNodeX node) + x
+                    node.x + x
 
                 actualY =
-                    (getPathNodeY node) + y
+                    node.y + y
 
                 actualTerrain =
                     arenaTerrain arena actualX actualY
@@ -388,13 +398,11 @@ checkNode node arena offset =
 
                     Just (Gr n) ->
                         Just
-                            (PathNode
-                                { x = actualX
-                                , y = actualY
-                                , cameFrom = Nothing
-                                , cost = n
-                                }
-                            )
+                            { x = actualX
+                            , y = actualY
+                            , cameFrom = Empty
+                            , cost = n
+                            }
 
 
 arenaTerrain : Arena -> Int -> Int -> Maybe Terrain
@@ -409,16 +417,7 @@ arenaTerrain arena x y =
         Maybe.andThen (Array.get x) row
 
 
-getPathNode : PathNode -> { x : Int, y : Int, cameFrom : Maybe PathNode, cost : Float }
-getPathNode ((PathNode { x, y, cost, cameFrom }) as node) =
-    { x = x, y = y, cost = cost, cameFrom = cameFrom }
 
-
-getPathNodeX : PathNode -> Int
-getPathNodeX (PathNode { x }) =
-    x
-
-
-getPathNodeY : PathNode -> Int
-getPathNodeY (PathNode { y }) =
-    y
+-- getPathNode : PathNode -> { x : Int, y : Int, cameFrom : Maybe PathNode, cost : Float }
+-- getPathNode ((PathNode { x, y, cost, cameFrom }) as node) =
+--     { x = x, y = y, cost = cost, cameFrom = cameFrom }
