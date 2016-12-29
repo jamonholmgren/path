@@ -4,6 +4,8 @@ import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Time exposing (Time, millisecond)
+import Array
+import Debug
 
 
 main : Program Never Model Msg
@@ -39,7 +41,12 @@ type alias Character =
     , y : Int
     , targetX : Int
     , targetY : Int
+    , targetPath : Path
     }
+
+
+type alias Path =
+    List { x : Int, y : Int }
 
 
 type alias Model =
@@ -80,7 +87,7 @@ initArena =
 
 initCharacter : Character
 initCharacter =
-    { x = 1, y = 2, targetX = 6, targetY = 1 }
+    { x = 1, y = 2, targetX = 6, targetY = 1, targetPath = [ { x = 2, y = 2 }, { x = 3, y = 3 } ] }
 
 
 
@@ -88,20 +95,199 @@ initCharacter =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({ character } as model) =
+update msg ({ character, arena } as model) =
     case msg of
         Advance _ ->
             let
                 char =
-                    { character
-                        | x = (character.x + (sign (character.targetX - character.x)))
-                        , y = (character.y + (sign (character.targetY - character.y)))
-                    }
+                    case character.targetPath of
+                        [] ->
+                            character
+
+                        step :: remainingPath ->
+                            { character
+                                | x = (character.x + (sign (step.x - character.x)))
+                                , y = (character.y + (sign (step.y - character.y)))
+                                , targetPath = remainingPath
+                            }
             in
                 ( { model | character = char }, Cmd.none )
 
-        SetTarget row col ->
-            ( { model | character = { character | targetX = col, targetY = row } }, Cmd.none )
+        SetTarget x y ->
+            let
+                newPath =
+                    pathFind character.x character.y x y arena
+                        |> Debug.log "newPath"
+            in
+                ( { model | character = { character | targetX = x, targetY = y, targetPath = newPath } }, Cmd.none )
+
+
+type PathTree
+    = Empty
+    | Predecessor PathNode
+
+
+type alias PathNode =
+    { x : Int
+    , y : Int
+    , cameFrom : PathTree
+    , cost : Float
+    }
+
+
+pathFind : Int -> Int -> Int -> Int -> Arena -> Path
+pathFind characterX characterY targetX targetY arena =
+    let
+        closedSet =
+            []
+
+        openSet =
+            [ { x = characterX, y = characterY, cameFrom = Empty, cost = 0 } ]
+
+        exploredNodes =
+            exploreNodes openSet closedSet arena
+
+        targetNode =
+            exploredNodes
+                |> List.filter (findNode targetX targetY)
+                |> List.head
+                |> Debug.log "targetNode"
+    in
+        case targetNode of
+            Nothing ->
+                []
+
+            Just pathNode ->
+                tracePathBack pathNode exploredNodes [ { x = pathNode.x, y = pathNode.y } ]
+
+
+tracePathBack : PathNode -> List PathNode -> Path -> Path
+tracePathBack node exploredNodes currentPath =
+    case node.cameFrom of
+        Empty ->
+            currentPath
+
+        Predecessor pred ->
+            tracePathBack pred exploredNodes ({ x = pred.x, y = pred.y } :: currentPath)
+
+
+findNode : Int -> Int -> PathNode -> Bool
+findNode x y node =
+    (node.x == x) && (node.y == y)
+
+
+exploreNodes : List PathNode -> List PathNode -> Arena -> List PathNode
+exploreNodes openSet closedSet arena =
+    let
+        origin =
+            List.sortBy .cost openSet
+                |> List.head
+                |> Maybe.withDefault { x = 0, y = 0, cameFrom = Empty, cost = 9999 }
+
+        neighbors =
+            (nodeNeighbors origin arena)
+                |> List.filterMap (lowerCostNode closedSet)
+
+        newOpenSet =
+            (List.filter (\n -> (n.x /= origin.x) || (n.y /= origin.y)) openSet)
+                ++ neighbors
+
+        newClosedSet =
+            origin :: closedSet
+    in
+        if List.length openSet > 0 then
+            exploreNodes newOpenSet newClosedSet arena
+        else
+            newClosedSet
+
+
+lowerCostNode : List PathNode -> PathNode -> Maybe PathNode
+lowerCostNode closedSet neighborNode =
+    let
+        matchingNode =
+            closedSet
+                |> List.filter (\n -> (n.x == neighborNode.x) && (n.y == neighborNode.y))
+                |> List.head
+    in
+        case matchingNode of
+            Nothing ->
+                Just neighborNode
+
+            Just n ->
+                if n.cost > neighborNode.cost then
+                    Just neighborNode
+                else
+                    Nothing
+
+
+nodeNeighbors : PathNode -> Arena -> List PathNode
+nodeNeighbors node arena =
+    let
+        grid =
+            [ ( -1, -1 )
+            , ( -1, 0 )
+            , ( -1, 1 )
+            , ( 0, -1 )
+            , ( 0, 1 )
+            , ( 1, -1 )
+            , ( 1, 0 )
+            , ( 1, 1 )
+            ]
+    in
+        List.filterMap (checkNode node arena) grid
+
+
+checkNode : PathNode -> Arena -> ( Int, Int ) -> Maybe PathNode
+checkNode node arena offset =
+    case offset of
+        ( 0, 0 ) ->
+            Nothing
+
+        ( x, y ) ->
+            let
+                actualX =
+                    node.x + x
+
+                actualY =
+                    node.y + y
+
+                actualTerrain =
+                    arenaTerrain arena actualX actualY
+            in
+                case actualTerrain of
+                    Nothing ->
+                        Nothing
+
+                    Just Wall ->
+                        Nothing
+
+                    Just (Gr c) ->
+                        let
+                            cost =
+                                if x /= 0 && y /= 0 then
+                                    c * (sqrt 2)
+                                else
+                                    c
+                        in
+                            Just
+                                { x = actualX
+                                , y = actualY
+                                , cameFrom = Predecessor node
+                                , cost =
+                                    node.cost + cost
+                                }
+
+
+arenaTerrain : Arena -> Int -> Int -> Maybe Terrain
+arenaTerrain arena x y =
+    let
+        arenaArray =
+            Array.fromList (List.map Array.fromList arena)
+
+        row =
+            Array.get y arenaArray
+    in
+        Maybe.andThen (Array.get x) row
 
 
 
@@ -140,7 +326,7 @@ arenaRowView index row =
 
 arenaBlockView : Int -> Int -> Terrain -> Html Msg
 arenaBlockView row col terr =
-    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget row col)) ] [ text (blockLabel row col terr) ]
+    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
 
 
 characterView : Character -> List (Html Msg)
