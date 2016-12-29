@@ -149,7 +149,7 @@ pathFind characterX characterY targetX targetY arena =
 
         targetNode =
             exploredNodes
-                |> List.filter (findNode targetX targetY)
+                |> List.filter (locationsEqual {x = targetX, y = targetY})
                 |> List.head
                 |> Debug.log "targetNode"
     in
@@ -171,9 +171,9 @@ tracePathBack node exploredNodes currentPath =
             tracePathBack pred exploredNodes ({ x = pred.x, y = pred.y } :: currentPath)
 
 
-findNode : Int -> Int -> PathNode -> Bool
-findNode x y node =
-    (node.x == x) && (node.y == y)
+locationsEqual : { a | x : Int, y : Int } -> { b | x : Int, y : Int } -> Bool
+locationsEqual a b =
+    (a.x == b.x) && (a.y == b.y)
 
 
 exploreNodes : List PathNode -> List PathNode -> Arena -> List PathNode
@@ -189,7 +189,7 @@ exploreNodes openSet closedSet arena =
                 |> List.filterMap (lowerCostNode closedSet)
 
         newOpenSet =
-            (List.filter (\n -> (n.x /= origin.x) || (n.y /= origin.y)) openSet)
+            (List.filter (not << locationsEqual origin) openSet)
                 ++ neighbors
 
         newClosedSet =
@@ -206,7 +206,7 @@ lowerCostNode closedSet neighborNode =
     let
         matchingNode =
             closedSet
-                |> List.filter (\n -> (n.x == neighborNode.x) && (n.y == neighborNode.y))
+                |> List.filter (locationsEqual neighborNode)
                 |> List.head
     in
         case matchingNode of
