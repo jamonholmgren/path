@@ -400,8 +400,10 @@ checkNode node arena offset =
                         Just
                             { x = actualX
                             , y = actualY
-                            , cameFrom = Empty
-                            , cost = n
+                            , cameFrom = Predecessor node
+                            , cost =
+                                node.cost + n
+                                -- TODO: add diagonal cost
                             }
 
 
@@ -415,9 +417,3 @@ arenaTerrain arena x y =
             Array.get y arenaArray
     in
         Maybe.andThen (Array.get x) row
-
-
-
--- getPathNode : PathNode -> { x : Int, y : Int, cameFrom : Maybe PathNode, cost : Float }
--- getPathNode ((PathNode { x, y, cost, cameFrom }) as node) =
---     { x = x, y = y, cost = cost, cameFrom = cameFrom }
