@@ -158,7 +158,7 @@ pathFind characterX characterY targetX targetY arena =
                 []
 
             Just pathNode ->
-                tracePathBack pathNode exploredNodes [ { x = pathNode.x, y = pathNode.y } ]
+                tracePathBack pathNode exploredNodes []
 
 
 tracePathBack : PathNode -> List PathNode -> Path -> Path
@@ -168,7 +168,7 @@ tracePathBack node exploredNodes currentPath =
             currentPath
 
         Predecessor pred ->
-            tracePathBack pred exploredNodes ({ x = pred.x, y = pred.y } :: currentPath)
+            tracePathBack pred exploredNodes ({ x = node.x, y = node.y } :: currentPath)
 
 
 locationsEqual : { a | x : Int, y : Int } -> { b | x : Int, y : Int } -> Bool
