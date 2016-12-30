@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import List.Extra
 import Time exposing (Time, millisecond)
 import Array
 import Debug
@@ -36,17 +37,26 @@ type alias Arena =
     List (List Terrain)
 
 
-type alias Character =
+type alias Point =
     { x : Int
     , y : Int
-    , targetX : Int
-    , targetY : Int
+    }
+
+
+pointOrigin : Point
+pointOrigin =
+    Point 0 0
+
+
+type alias Character =
+    { location : Point
+    , target : Point
     , targetPath : Path
     }
 
 
 type alias Path =
-    List { x : Int, y : Int }
+    List Point
 
 
 type alias Model =
@@ -87,7 +97,7 @@ initArena =
 
 initCharacter : Character
 initCharacter =
-    { x = 1, y = 2, targetX = 6, targetY = 1, targetPath = [ { x = 2, y = 2 }, { x = 3, y = 3 } ] }
+    { location = Point 1 2, target = Point 1 2, targetPath = [] }
 
 
 
@@ -106,8 +116,10 @@ update msg ({ character, arena } as model) =
 
                         step :: remainingPath ->
                             { character
-                                | x = (character.x + (sign (step.x - character.x)))
-                                , y = (character.y + (sign (step.y - character.y)))
+                                | location =
+                                    { x = character.location.x + sign (step.x - character.location.x)
+                                    , y = character.location.y + sign (step.y - character.location.y)
+                                    }
                                 , targetPath = remainingPath
                             }
             in
@@ -116,10 +128,12 @@ update msg ({ character, arena } as model) =
         SetTarget x y ->
             let
                 newPath =
-                    pathFind character.x character.y x y arena
-                        |> Debug.log "newPath"
+                    pathFind character.location { x = x, y = y } arena
+
+                newTarget =
+                    { x = x, y = y }
             in
-                ( { model | character = { character | targetX = x, targetY = y, targetPath = newPath } }, Cmd.none )
+                ( { model | character = { character | target = newTarget, targetPath = newPath } }, Cmd.none )
 
 
 type PathTree
@@ -128,30 +142,28 @@ type PathTree
 
 
 type alias PathNode =
-    { x : Int
-    , y : Int
+    { location : Point
     , cameFrom : PathTree
     , cost : Float
     }
 
 
-pathFind : Int -> Int -> Int -> Int -> Arena -> Path
-pathFind characterX characterY targetX targetY arena =
+pathFind : Point -> Point -> Arena -> Path
+pathFind character target arena =
     let
         closedSet =
             []
 
         openSet =
-            [ { x = characterX, y = characterY, cameFrom = Empty, cost = 0 } ]
+            [ PathNode character Empty 0 ]
 
         exploredNodes =
             exploreNodes openSet closedSet arena
 
         targetNode =
             exploredNodes
-                |> List.filter (locationsEqual {x = targetX, y = targetY})
+                |> List.filter (\node -> (locationsEqual target node.location))
                 |> List.head
-                |> Debug.log "targetNode"
     in
         case targetNode of
             Nothing ->
@@ -168,10 +180,14 @@ tracePathBack node exploredNodes currentPath =
             currentPath
 
         Predecessor pred ->
-            tracePathBack pred exploredNodes ({ x = node.x, y = node.y } :: currentPath)
+            let
+                prevLocation =
+                    { x = node.location.x, y = node.location.y }
+            in
+                tracePathBack pred exploredNodes (prevLocation :: currentPath)
 
 
-locationsEqual : { a | x : Int, y : Int } -> { b | x : Int, y : Int } -> Bool
+locationsEqual : Point -> Point -> Bool
 locationsEqual a b =
     (a.x == b.x) && (a.y == b.y)
 
@@ -182,15 +198,16 @@ exploreNodes openSet closedSet arena =
         origin =
             List.sortBy .cost openSet
                 |> List.head
-                |> Maybe.withDefault { x = 0, y = 0, cameFrom = Empty, cost = 9999 }
+                |> Maybe.withDefault { location = pointOrigin, cameFrom = Empty, cost = 9999 }
 
         neighbors =
             (nodeNeighbors origin arena)
                 |> List.filterMap (lowerCostNode closedSet)
 
         newOpenSet =
-            (List.filter (not << locationsEqual origin) openSet)
-                ++ neighbors
+            openSet
+                |> List.filter (\node -> not (locationsEqual origin.location node.location))
+                |> (++) neighbors
 
         newClosedSet =
             origin :: closedSet
@@ -206,7 +223,7 @@ lowerCostNode closedSet neighborNode =
     let
         matchingNode =
             closedSet
-                |> List.filter (locationsEqual neighborNode)
+                |> List.filter (\node -> locationsEqual neighborNode.location node.location)
                 |> List.head
     in
         case matchingNode of
@@ -224,30 +241,23 @@ nodeNeighbors : PathNode -> Arena -> List PathNode
 nodeNeighbors node arena =
     let
         grid =
-            [ ( -1, -1 )
-            , ( -1, 0 )
-            , ( -1, 1 )
-            , ( 0, -1 )
-            , ( 0, 1 )
-            , ( 1, -1 )
-            , ( 1, 0 )
-            , ( 1, 1 )
-            ]
+            List.Extra.lift2 (,) [ -1, 0, 1 ] [ -1, 0, 1 ]
+                |> List.filter (\( x, y ) -> x /= 0 || y /= 0)
+                |> List.map (\( x, y ) -> Point x y)
     in
         List.filterMap (checkNode node arena) grid
 
 
-checkNode : PathNode -> Arena -> ( Int, Int ) -> Maybe PathNode
-checkNode node arena (x, y) =
+checkNode : PathNode -> Arena -> Point -> Maybe PathNode
+checkNode node arena point =
     let
-        actualX =
-            node.x + x
-
-        actualY =
-            node.y + y
+        actualLocation =
+            { x = node.location.x + point.x
+            , y = node.location.y + point.y
+            }
 
         actualTerrain =
-            arenaTerrain arena actualX actualY
+            arenaTerrain arena actualLocation
     in
         case actualTerrain of
             Nothing ->
@@ -259,30 +269,29 @@ checkNode node arena (x, y) =
             Just (Gr c) ->
                 let
                     cost =
-                        if x /= 0 && y /= 0 then
+                        if actualLocation.x /= 0 && actualLocation.y /= 0 then
                             c * (sqrt 2)
                         else
                             c
                 in
                     Just
-                        { x = actualX
-                        , y = actualY
+                        { location = actualLocation
                         , cameFrom = Predecessor node
                         , cost =
                             node.cost + cost
                         }
 
 
-arenaTerrain : Arena -> Int -> Int -> Maybe Terrain
-arenaTerrain arena x y =
+arenaTerrain : Arena -> Point -> Maybe Terrain
+arenaTerrain arena point =
     let
         arenaArray =
             Array.fromList (List.map Array.fromList arena)
 
         row =
-            Array.get y arenaArray
+            Array.get point.y arenaArray
     in
-        Maybe.andThen (Array.get x) row
+        Maybe.andThen (Array.get point.x) row
 
 
 
@@ -392,8 +401,8 @@ characterStyle char =
     , ( "height", "80px" )
     , ( "margin", "10px" )
     , ( "position", "absolute" )
-    , ( "left", positionInPx char.x )
-    , ( "top", positionInPx char.y )
+    , ( "left", positionInPx char.location.x )
+    , ( "top", positionInPx char.location.y )
     , ( "backgroundColor", "lightsalmon" )
     , ( "borderRadius", "40px" )
     , ( "boxShadow", "2px 2px 4px 1px salmon" )
@@ -407,8 +416,8 @@ targetStyle char =
     , ( "height", "20px" )
     , ( "margin", "40px" )
     , ( "position", "absolute" )
-    , ( "left", positionInPx char.targetX )
-    , ( "top", positionInPx char.targetY )
+    , ( "left", positionInPx char.target.x )
+    , ( "top", positionInPx char.target.y )
     , ( "backgroundColor", "lightcoral" )
     , ( "borderRadius", "3px" )
     , ( "boxShadow", "2px 2px 4px 1px gray" )
