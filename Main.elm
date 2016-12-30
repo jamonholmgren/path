@@ -87,9 +87,9 @@ initArena =
     [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Wall, Wall, Gr 2, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 2, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Wall, Wall, Wall, Gr 1, Wall ]
+    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
     , [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     ]
@@ -386,13 +386,20 @@ terrainColor : Terrain -> String
 terrainColor terr =
     case terr of
         Wall ->
-            "dimgray"
-
-        Gr 1 ->
-            "lightgray"
+            "rgb(50, 50, 50)"
 
         Gr n ->
-            "darkgray"
+            let
+                base =
+                    250
+
+                offset =
+                    20
+            in
+                List.repeat 3 (base - n * offset)
+                    |> List.map toString
+                    |> String.join ", "
+                    |> \values -> "rgb(" ++ values ++ ")"
 
 
 characterStyle : Character -> List ( String, String )
