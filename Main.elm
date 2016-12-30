@@ -149,7 +149,7 @@ pathFind characterX characterY targetX targetY arena =
 
         targetNode =
             exploredNodes
-                |> List.filter (findNode targetX targetY)
+                |> List.filter (locationsEqual {x = targetX, y = targetY})
                 |> List.head
                 |> Debug.log "targetNode"
     in
@@ -158,7 +158,7 @@ pathFind characterX characterY targetX targetY arena =
                 []
 
             Just pathNode ->
-                tracePathBack pathNode exploredNodes [ { x = pathNode.x, y = pathNode.y } ]
+                tracePathBack pathNode exploredNodes []
 
 
 tracePathBack : PathNode -> List PathNode -> Path -> Path
@@ -168,12 +168,12 @@ tracePathBack node exploredNodes currentPath =
             currentPath
 
         Predecessor pred ->
-            tracePathBack pred exploredNodes ({ x = pred.x, y = pred.y } :: currentPath)
+            tracePathBack pred exploredNodes ({ x = node.x, y = node.y } :: currentPath)
 
 
-findNode : Int -> Int -> PathNode -> Bool
-findNode x y node =
-    (node.x == x) && (node.y == y)
+locationsEqual : { a | x : Int, y : Int } -> { b | x : Int, y : Int } -> Bool
+locationsEqual a b =
+    (a.x == b.x) && (a.y == b.y)
 
 
 exploreNodes : List PathNode -> List PathNode -> Arena -> List PathNode
@@ -189,7 +189,7 @@ exploreNodes openSet closedSet arena =
                 |> List.filterMap (lowerCostNode closedSet)
 
         newOpenSet =
-            (List.filter (\n -> (n.x /= origin.x) || (n.y /= origin.y)) openSet)
+            (List.filter (not << locationsEqual origin) openSet)
                 ++ neighbors
 
         newClosedSet =
@@ -206,7 +206,7 @@ lowerCostNode closedSet neighborNode =
     let
         matchingNode =
             closedSet
-                |> List.filter (\n -> (n.x == neighborNode.x) && (n.y == neighborNode.y))
+                |> List.filter (locationsEqual neighborNode)
                 |> List.head
     in
         case matchingNode of
@@ -238,44 +238,39 @@ nodeNeighbors node arena =
 
 
 checkNode : PathNode -> Arena -> ( Int, Int ) -> Maybe PathNode
-checkNode node arena offset =
-    case offset of
-        ( 0, 0 ) ->
-            Nothing
+checkNode node arena (x, y) =
+    let
+        actualX =
+            node.x + x
 
-        ( x, y ) ->
-            let
-                actualX =
-                    node.x + x
+        actualY =
+            node.y + y
 
-                actualY =
-                    node.y + y
+        actualTerrain =
+            arenaTerrain arena actualX actualY
+    in
+        case actualTerrain of
+            Nothing ->
+                Nothing
 
-                actualTerrain =
-                    arenaTerrain arena actualX actualY
-            in
-                case actualTerrain of
-                    Nothing ->
-                        Nothing
+            Just Wall ->
+                Nothing
 
-                    Just Wall ->
-                        Nothing
-
-                    Just (Gr c) ->
-                        let
-                            cost =
-                                if x /= 0 && y /= 0 then
-                                    c * (sqrt 2)
-                                else
-                                    c
-                        in
-                            Just
-                                { x = actualX
-                                , y = actualY
-                                , cameFrom = Predecessor node
-                                , cost =
-                                    node.cost + cost
-                                }
+            Just (Gr c) ->
+                let
+                    cost =
+                        if x /= 0 && y /= 0 then
+                            c * (sqrt 2)
+                        else
+                            c
+                in
+                    Just
+                        { x = actualX
+                        , y = actualY
+                        , cameFrom = Predecessor node
+                        , cost =
+                            node.cost + cost
+                        }
 
 
 arenaTerrain : Arena -> Int -> Int -> Maybe Terrain
