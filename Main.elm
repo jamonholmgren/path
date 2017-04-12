@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
--- import List.Extra
+import List.Extra
 import Time exposing (Time, millisecond)
 import Array
 -- import Debug
@@ -82,7 +82,7 @@ initArena =
     [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Wall ]
+    , [ Wall, Wall, Gr 1, Gr 4, Gr 1, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
     , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
@@ -144,13 +144,146 @@ type alias PathNode =
 
 
 pathFind : Point -> Point -> Arena -> Path
-pathFind character target arena =
-    [{ x = target.x, y = target.y }]
+pathFind originPoint target arena =
+    let
+        origin = PathNode originPoint Empty 0
+        closedSet = []
+        openSet = [ origin ]
+
+        exploredNodes =
+            exploreNodes openSet closedSet target arena
+
+        targetNode =
+            exploredNodes
+                |> List.filter (\node -> target == node.location)
+                |> List.head
+    in
+        case targetNode of
+            Nothing ->
+                []
+
+            Just pathNode ->
+                tracePathBack pathNode exploredNodes []
+
+
+tracePathBack : PathNode -> List PathNode -> Path -> Path
+tracePathBack node exploredNodes currentPath =
+    case node.cameFrom of
+        Empty ->
+            currentPath
+
+        Predecessor predNode ->
+            tracePathBack predNode exploredNodes (node.location :: currentPath)
+
+
+exploreNodes : List PathNode -> List PathNode -> Point -> Arena -> List PathNode
+exploreNodes openSet closedSet target arena =
+    let
+        origin = lowestCostNode openSet
+
+        neighbors =
+            (nodeNeighbors origin arena)
+                |> List.filterMap (lowerCostNode closedSet)
+
+        newOpenSet =
+            openSet
+                |> List.filter (\node -> origin.location /= node.location)
+                |> (++) neighbors
+
+        newClosedSet =
+            origin :: closedSet
+
+        foundTarget =
+            newClosedSet
+                |> List.filter (\node -> target == node.location)
+                |> List.head
+
+    in
+        case foundTarget of
+            Nothing ->
+                if List.length openSet > 0 then
+                    exploreNodes newOpenSet newClosedSet target arena
+                else
+                    newClosedSet
+            Just _ ->
+                newClosedSet
+
+lowestCostNode : List PathNode -> PathNode
+lowestCostNode set =
+    List.sortBy .cost set
+        |> List.head
+        |> Maybe.withDefault { location = pointOrigin, cameFrom = Empty, cost = 9999 }
 
 
 locationsEqual : Point -> Point -> Bool
 locationsEqual a b =
     (a.x == b.x) && (a.y == b.y)
+
+
+
+nodeNeighbors : PathNode -> Arena -> List PathNode
+nodeNeighbors node arena =
+    let
+        grid =
+            List.Extra.lift2 (,) [ -1, 0, 1 ] [ -1, 0, 1 ]
+                |> List.filter (\( x, y ) -> x /= 0 || y /= 0)
+                |> List.map (\( x, y ) -> Point x y)
+    in
+        List.filterMap (checkNode node arena) grid
+
+
+checkNode : PathNode -> Arena -> Point -> Maybe PathNode
+checkNode node arena offset =
+    let
+        actualLocation =
+            { x = node.location.x + offset.x
+            , y = node.location.y + offset.y
+            }
+
+        actualTerrain =
+            arenaTerrain arena actualLocation
+    in
+        case actualTerrain of
+            Nothing ->
+                Nothing
+
+            Just Wall ->
+                Nothing
+
+            Just (Gr c) ->
+                let
+                    cost =
+                        if actualLocation.x /= 0 && actualLocation.y /= 0 then
+                            c * (sqrt 2)
+                        else
+                            c
+                in
+                    Just
+                        { location = actualLocation
+                        , cameFrom = Predecessor node
+                        , cost =
+                            node.cost + cost
+                        }
+
+
+
+lowerCostNode : List PathNode -> PathNode -> Maybe PathNode
+lowerCostNode closedSet neighborNode =
+    let
+        matchingNode =
+            closedSet
+                |> List.filter (\node -> locationsEqual neighborNode.location node.location)
+                |> List.head
+    in
+        case matchingNode of
+            Nothing ->
+                Just neighborNode
+
+            Just n ->
+                if n.cost > neighborNode.cost then
+                    Just neighborNode
+                else
+                    Nothing
 
 
 arenaTerrain : Arena -> Point -> Maybe Terrain
@@ -170,10 +303,8 @@ arenaTerrain arena point =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Time.every (1000 * millisecond) Advance
-        ]
+subscriptions _ =
+    Time.every (1000 * millisecond) Advance
 
 
 
