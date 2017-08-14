@@ -156,7 +156,7 @@ updateLocation location step =
 -- Where we will spend most of our time ---------------------------------
 
 pathFind : Point -> Point -> Arena -> Path
-pathFind character target arena =
+pathFind origin target arena =
     [ Point target.x target.y ]
 
 
