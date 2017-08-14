@@ -27,20 +27,24 @@ exploreNodes openSet closedSet arena =
 
 -- Either code this or copy it
 
-lowerCostNode : List PathNode -> PathNode -> Maybe PathNode
+lowerCostNode : List PathNode -> PathNode -> Bool
 lowerCostNode closedSet neighborNode =
-    let
-        matchingNode =
-            closedSet
-                |> List.filter (\node -> locationsEqual neighborNode.location node.location)
-                |> List.head
-    in
-        case matchingNode of
-            Nothing ->
-                Just neighborNode
-
-            Just n ->
-                if n.cost > neighborNode.cost then
-                    Just neighborNode
-                else
-                    Nothing
+    closedSet
+    |> List.filter(\closedNode -> locationsEqual closedNode.location neighborNode.location)
+    |> List.isEmpty
+    --
+    -- let
+    --     matchingNode =
+    --         closedSet
+    --             |> List.filter (\node -> locationsEqual neighborNode.location node.location)
+    --             |> List.head
+    -- in
+    --     case matchingNode of
+    --         Nothing ->
+    --             Just neighborNode
+    --
+    --         Just n ->
+    --             if n.cost > neighborNode.cost then
+    --                 Just neighborNode
+    --             else
+    --                 Nothing
