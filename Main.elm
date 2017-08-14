@@ -49,6 +49,7 @@ type alias Character =
     }
 
 
+-- The (eventual) final path to follow
 type alias Path =
     List Point
 
@@ -59,6 +60,7 @@ type PathTree
     | Predecessor PathNode
 
 
+-- This is what we will be using to explore the map
 type alias PathNode =
     { location : Point
     , cameFrom : PathTree
@@ -137,8 +139,11 @@ update msg ({ character, arena } as model) =
                 newPath =
                     pathFind character.location newTarget arena
 
+                newCharacter =
+                    { character | target = newTarget, targetPath = newPath }
+
             in
-                ( { model | character = { character | target = newTarget, targetPath = newPath } }, Cmd.none )
+                ( { model | character = newCharacter }, Cmd.none )
 
 
 updateLocation : Point -> Point -> Point
@@ -148,10 +153,14 @@ updateLocation location step =
     }
 
 
+-- Where we will spend most of our time ---------------------------------
+
 pathFind : Point -> Point -> Arena -> Path
 pathFind character target arena =
-    [{ x = target.x, y = target.y }]
+    [ Point target.x target.y ]
 
+
+-- end --------------------------------- --------------------------------
 
 locationsEqual : Point -> Point -> Bool
 locationsEqual a b =
