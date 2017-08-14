@@ -3,7 +3,6 @@ module Main exposing (..)
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
--- import List.Extra
 import Time exposing (Time, millisecond)
 import Array
 -- import Debug
@@ -52,6 +51,19 @@ type alias Character =
 
 type alias Path =
     List Point
+
+
+-- Required to avoid circular type alias definition PathNode
+type PathTree
+    = Empty
+    | Predecessor PathNode
+
+
+type alias PathNode =
+    { location : Point
+    , cameFrom : PathTree
+    , cost : Float
+    }
 
 
 type alias Model =
@@ -111,10 +123,7 @@ update msg ({ character, arena } as model) =
 
                         step :: remainingPath ->
                             { character
-                                | location =
-                                    { x = character.location.x + sign (step.x - character.location.x)
-                                    , y = character.location.y + sign (step.y - character.location.y)
-                                    }
+                                | location = (updateLocation character.location step)
                                 , targetPath = remainingPath
                             }
             in
@@ -122,24 +131,20 @@ update msg ({ character, arena } as model) =
 
         SetTarget x y ->
             let
-                newPath =
-                    pathFind character.location { x = x, y = y } arena
-
                 newTarget =
-                    { x = x, y = y }
+                    Point x y
+
+                newPath =
+                    pathFind character.location newTarget arena
+
             in
                 ( { model | character = { character | target = newTarget, targetPath = newPath } }, Cmd.none )
 
 
-type PathTree
-    = Empty
-    | Predecessor PathNode
-
-
-type alias PathNode =
-    { location : Point
-    , cameFrom : PathTree
-    , cost : Float
+updateLocation : Point -> Point -> Point
+updateLocation location step =
+    { x = location.x + sign (step.x - location.x)
+    , y = location.y + sign (step.y - location.y)
     }
 
 
@@ -176,14 +181,12 @@ subscriptions model =
         ]
 
 
-
 -- Main view
 
 
 view : Model -> Html.Html Msg
 view model =
     div [ style containerStyle ] ((arenaView model.arena) ++ (characterView model.character))
-
 
 
 -- View components
@@ -209,7 +212,6 @@ characterView char =
     [ div [ style (characterStyle char) ] []
     , div [ style (targetStyle char) ] []
     ]
-
 
 
 -- View styles
