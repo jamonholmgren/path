@@ -98,22 +98,22 @@ initArena =
     [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Wall ]
+    , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Wall, Wall, Gr 3, Wall, Gr 1, Wall ]
     , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 3, Gr 5, Wall, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 5, Gr 3, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Gr 1, Wall, Wall, Wall, Wall, Wall, Gr 3, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 3, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 9, Gr 2, Gr 2, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
     , [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     ]
 
@@ -269,12 +269,6 @@ checkNode node arena target point =
 
         actualTerrain =
             arenaTerrain arena actualLocation
-
-        distX = toFloat (abs (actualLocation.x - target.x))
-        distY = toFloat (abs (actualLocation.y - target.y))
-
-        distanceToTarget =
-            sqrt (distX * distX + distY * distY)
     in
         case actualTerrain of
             Nothing ->
@@ -285,11 +279,20 @@ checkNode node arena target point =
 
             Just (Gr c) ->
                 let
+                    terrainFactor = 1.0 -- how much terrain affects heuristic
+                    distanceFactor = 10.0 -- how much distance affects heuristic
+                    
+                    distX = toFloat (abs (actualLocation.x - target.x))
+                    distY = toFloat (abs (actualLocation.y - target.y))
+
+                    distanceToTarget =
+                        sqrt (distX * distX + distY * distY) * distanceFactor
+
                     cost =
                         if point.x /= 0 && point.y /= 0 then
-                            (c * 5) * (sqrt 2) + distanceToTarget
+                            (c * terrainFactor) * (sqrt 2) + distanceToTarget
                         else
-                            (c * 5) + distanceToTarget
+                            (c * terrainFactor) + distanceToTarget
                 in
                     Just
                         { location = actualLocation
@@ -353,13 +356,20 @@ arenaBlockView closedSet row col terr =
             |> List.filter (\node -> node.location.x == col && node.location.y == row)
             |> List.head
 
+        longestPathNode =
+            closedSet
+            |> List.sortBy .cost
+            |> List.reverse
+            |> List.head
+            |> Maybe.withDefault (PathNode (Point 0 0) Empty 255)
+        
         blockColor =
             case matchedNode of
                 Nothing ->
                     terrainColor terr
 
                 Just node ->
-                    "rgb(10, " ++ (toString (255 - (round (node.cost * 2)))) ++ ", 10)"
+                    "rgb(10, " ++ (toString (255 - (round ((node.cost / longestPathNode.cost) * 240)))) ++ ", 10)"
     in
         div [ style (blockStyle blockColor), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
 
