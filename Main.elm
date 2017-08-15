@@ -279,7 +279,7 @@ checkNode node arena target point =
 
             Just (Gr c) ->
                 let
-                    terrainFactor = 1.0 -- how much terrain affects heuristic
+                    terrainFactor = 3.0 -- how much terrain affects heuristic
                     distanceFactor = 10.0 -- how much distance affects heuristic
                     
                     distX = toFloat (abs (actualLocation.x - target.x))
