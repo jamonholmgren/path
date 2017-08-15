@@ -5,7 +5,7 @@ import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import Time exposing (Time, millisecond)
 import Array
--- import Debug
+import Debug
 
 
 main : Program Never Model Msg
@@ -71,6 +71,7 @@ type alias PathNode =
 type alias Model =
     { arena : Arena
     , character : Character
+    , closedSet : List PathNode
     }
 
 
@@ -82,6 +83,7 @@ init : ( Model, Cmd Msg )
 init =
     ( { arena = initArena
       , character = initCharacter
+      , closedSet = []
       }
     , Cmd.none
     )
@@ -93,14 +95,26 @@ init =
 
 initArena : Arena
 initArena =
-    [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall ]
-    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
-    , [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
+    [ [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 2, Gr 2, Gr 1, Wall, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Wall, Wall, Gr 4, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 4, Gr 6, Wall, Wall, Wall, Gr 8, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Wall, Wall, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 9, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Gr 1, Wall ]
+    , [ Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Wall ]
     ]
 
 
@@ -136,14 +150,14 @@ update msg ({ character, arena } as model) =
                 newTarget =
                     Point x y
 
-                newPath =
+                (newPath, newClosedSet) =
                     pathFind character.location newTarget arena
 
                 newCharacter =
                     { character | target = newTarget, targetPath = newPath }
 
             in
-                ( { model | character = newCharacter }, Cmd.none )
+                ( { model | character = newCharacter, closedSet = newClosedSet }, Cmd.none )
 
 
 updateLocation : Point -> Point -> Point
@@ -155,68 +169,134 @@ updateLocation location step =
 
 -- Where we will spend most of our time ---------------------------------
 
-pathFind : Point -> Point -> Arena -> Path
+pathFind : Point -> Point -> Arena -> ( Path, List PathNode )
 pathFind origin target arena =
--- Implement pathFind here
-    [ target ]
+    let
+        openSet =
+            [ PathNode origin Empty 0 ]
+
+        closedSet =
+            exploreNodes openSet [] arena target
+
+        foundTarget =
+            closedSet
+            |> List.filter (\node -> locationsEqual target node.location)
+            |> List.head
+    in
+        case foundTarget of
+            Nothing ->
+                ([], closedSet)
+
+            Just pathNode ->
+                (tracePathBack pathNode [], closedSet)
 
 
--- exploreNodes : List PathNode -> List PathNode -> Arena -> List PathNode
--- exploreNodes openSet closedSet arena =
--- Implement exploreNodes here
+tracePathBack : PathNode -> Path -> Path
+tracePathBack pathNode currentPath =
+    case pathNode.cameFrom of
+        Empty ->
+            currentPath
+
+        Predecessor pred ->
+            tracePathBack pred (pathNode.location :: currentPath)
 
 
--- lowerCostNode : List PathNode -> PathNode -> Maybe PathNode
--- lowerCostNode closedSet neighborNode =
--- Implement lowerCostNode here
+exploreNodes : List PathNode -> List PathNode -> Arena -> Point -> List PathNode
+exploreNodes openSet closedSet arena target =
+    let
+        origin =
+            openSet
+            |> List.sortBy .cost
+            |> List.head
+            |> Maybe.withDefault (PathNode (Point 0 0) Empty 0)
 
+        neighbors =
+            nodeNeighbors origin arena target
+            |> List.filter (lowerCostNode closedSet)
+
+        foo = Debug.log "Neighbors" (toString neighbors)
+
+        newOpenSet =
+            openSet
+            |> List.filter (\node -> not (locationsEqual origin.location node.location))
+            |> (++) neighbors
+
+        newClosedSet =
+            origin :: closedSet
+
+        foundTarget =
+            newClosedSet
+            |> List.filter (\node -> locationsEqual node.location target)
+            |> List.head
+    in
+        case foundTarget of
+            Nothing ->
+                if List.length newOpenSet > 0 then
+                    exploreNodes newOpenSet newClosedSet arena target
+                else
+                    newClosedSet
+            Just targetNode ->
+                newClosedSet
+
+
+lowerCostNode : List PathNode -> PathNode -> Bool
+lowerCostNode closedSet neighborNode =
+    closedSet
+    |> List.filter(\closedNode -> locationsEqual closedNode.location neighborNode.location)
+    |> List.isEmpty
 
 -- Uncomment and explain nodeNeighbors and checkNode
 
--- nodeNeighbors : PathNode -> Arena -> List PathNode
--- nodeNeighbors node arena =
---     let
---         grid =
---             [ Point -1 -1,  Point 0 -1, Point 1 -1
---             , Point -1 0,               Point 1 0
---             , Point -1 1,   Point 0 1,  Point 1 1
---             ]
---     in
---         List.filterMap (checkNode node arena) grid
---
---
--- checkNode : PathNode -> Arena -> Point -> Maybe PathNode
--- checkNode node arena point =
---     let
---         actualLocation =
---             { x = node.location.x + point.x
---             , y = node.location.y + point.y
---             }
---
---         actualTerrain =
---             arenaTerrain arena actualLocation
---     in
---         case actualTerrain of
---             Nothing ->
---                 Nothing
---
---             Just Wall ->
---                 Nothing
---
---             Just (Gr c) ->
---                 let
---                     cost =
---                         if actualLocation.x /= 0 && actualLocation.y /= 0 then
---                             c * (sqrt 2)
---                         else
---                             c
---                 in
---                     Just
---                         { location = actualLocation
---                         , cameFrom = Predecessor node
---                         , cost =
---                             node.cost + cost
---                         }
+nodeNeighbors : PathNode -> Arena -> Point -> List PathNode
+nodeNeighbors node arena target =
+    let
+        grid =
+            [ Point -1 -1,  Point 0 -1, Point 1 -1
+            , Point -1 0,               Point 1 0
+            , Point -1 1,   Point 0 1,  Point 1 1
+            ]
+    in
+        List.filterMap (checkNode node arena target) grid
+
+
+checkNode : PathNode -> Arena -> Point -> Point -> Maybe PathNode
+checkNode node arena target point =
+    let
+        actualLocation =
+            { x = node.location.x + point.x
+            , y = node.location.y + point.y
+            }
+
+        actualTerrain =
+            arenaTerrain arena actualLocation
+
+        distX = toFloat (abs (actualLocation.x - target.x))
+        distY = toFloat (abs (actualLocation.y - target.y))
+
+        distanceToTarget =
+            sqrt (distX * distX + distY * distY)
+    in
+        case actualTerrain of
+            Nothing ->
+                Nothing
+
+            Just Wall ->
+                Nothing
+
+            Just (Gr c) ->
+                let
+                    cost =
+                        if point.x /= 0 && point.y /= 0 then
+                            (c * 5) * (sqrt 2) + distanceToTarget
+                        else
+                            (c * 5) + distanceToTarget
+                in
+                    Just
+                        { location = actualLocation
+                        , cameFrom = Predecessor node
+                        , cost =
+                            node.cost + cost
+                        }
 
 
 -- end --------------------------------- --------------------------------
@@ -240,7 +320,7 @@ arenaTerrain arena point =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Time.every (1000 * millisecond) Advance
+        [ Time.every (250 * millisecond) Advance
         ]
 
 
@@ -249,25 +329,39 @@ subscriptions model =
 
 view : Model -> Html.Html Msg
 view model =
-    div [ style containerStyle ] ((arenaView model.arena) ++ (characterView model.character))
+    div [ style containerStyle ] ((arenaView model.arena model.closedSet) ++ (characterView model.character))
 
 
 -- View components
 
 
-arenaView : Arena -> List (Html Msg)
-arenaView rows =
-    List.concat (List.indexedMap arenaRowView rows)
+arenaView : Arena -> List PathNode -> List (Html Msg)
+arenaView rows closedSet =
+    List.concat (List.indexedMap (arenaRowView closedSet) rows)
 
 
-arenaRowView : Int -> List Terrain -> List (Html Msg)
-arenaRowView index row =
-    List.indexedMap (arenaBlockView index) row
+arenaRowView : List PathNode -> Int -> List Terrain -> List (Html Msg)
+arenaRowView closedSet index row =
+    List.indexedMap (arenaBlockView closedSet index) row
 
 
-arenaBlockView : Int -> Int -> Terrain -> Html Msg
-arenaBlockView row col terr =
-    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
+arenaBlockView : List PathNode -> Int -> Int -> Terrain -> Html Msg
+arenaBlockView closedSet row col terr =
+    let
+        matchedNode =
+            closedSet
+            |> List.filter (\node -> node.location.x == col && node.location.y == row)
+            |> List.head
+
+        blockColor =
+            case matchedNode of
+                Nothing ->
+                    terrainColor terr
+
+                Just node ->
+                    "rgb(10, " ++ (toString (255 - (round (node.cost * 2)))) ++ ", 10)"
+    in
+        div [ style (blockStyle blockColor), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
 
 
 characterView : Character -> List (Html Msg)
@@ -310,8 +404,8 @@ containerStyle =
 
 blockStyle : String -> List ( String, String )
 blockStyle colorVal =
-    [ ( "width", "100px" )
-    , ( "height", "100px" )
+    [ ( "width", "40px" )
+    , ( "height", "40px" )
     , ( "backgroundColor", colorVal )
     , ( "float", "left" )
     , ( "outline", "1px solid slategray" )
@@ -340,24 +434,24 @@ terrainColor terr =
 
 characterStyle : Character -> List ( String, String )
 characterStyle char =
-    [ ( "width", "80px" )
-    , ( "height", "80px" )
-    , ( "margin", "10px" )
+    [ ( "width", "25px" )
+    , ( "height", "25px" )
+    , ( "margin", "5px" )
     , ( "position", "absolute" )
     , ( "left", positionInPx char.location.x )
     , ( "top", positionInPx char.location.y )
     , ( "backgroundColor", "lightsalmon" )
-    , ( "borderRadius", "40px" )
+    , ( "borderRadius", "20px" )
     , ( "boxShadow", "2px 2px 4px 1px salmon" )
-    , ( "transition", "top 1s, left 1s" )
+    , ( "transition", "top 0.25s, left 0.25s" )
     ]
 
 
 targetStyle : Character -> List ( String, String )
 targetStyle char =
-    [ ( "width", "20px" )
-    , ( "height", "20px" )
-    , ( "margin", "40px" )
+    [ ( "width", "10px" )
+    , ( "height", "10px" )
+    , ( "margin", "10px" )
     , ( "position", "absolute" )
     , ( "left", positionInPx char.target.x )
     , ( "top", positionInPx char.target.y )
@@ -387,7 +481,7 @@ sign num =
 
 positionInPx : number -> String
 positionInPx position =
-    toString (position * 100) ++ "px"
+    toString (position * 40) ++ "px"
 
 
 pointOrigin : Point
