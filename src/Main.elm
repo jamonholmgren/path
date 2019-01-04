@@ -1,17 +1,17 @@
-module Main exposing (..)
+module Main exposing (Arena, Character, Model, Msg(..), Path, PathNode, PathTree(..), Point, Terrain(..), arenaBlockView, arenaRowView, arenaTerrain, arenaView, blockLabel, blockStyle, characterStyle, characterView, checkNode, containerStyle, exploreNodes, init, initArena, initCharacter, locationsEqual, lowerCostNode, main, nodeNeighbors, pathFind, pointOrigin, positionInPx, sign, subscriptions, targetStyle, terrainColor, tracePathBack, update, view)
 
+import Array
+import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
 import List.Extra
-import Time exposing (Time, millisecond)
-import Array
-import Debug
+import Time
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , update = update
         , subscriptions = subscriptions
@@ -20,7 +20,7 @@ main =
 
 
 type Msg
-    = Advance Time
+    = Advance Time.Posix
     | SetTarget Int Int
 
 
@@ -69,8 +69,8 @@ type alias Model =
 -- Main init
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { arena = initArena
       , character = initCharacter
       }
@@ -123,7 +123,7 @@ update msg ({ character, arena } as model) =
                                 , targetPath = remainingPath
                             }
             in
-                ( { model | character = char }, Cmd.none )
+            ( { model | character = char }, Cmd.none )
 
         SetTarget x y ->
             let
@@ -133,7 +133,7 @@ update msg ({ character, arena } as model) =
                 newTarget =
                     { x = x, y = y }
             in
-                ( { model | character = { character | target = newTarget, targetPath = newPath } }, Cmd.none )
+            ( { model | character = { character | target = newTarget, targetPath = newPath } }, Cmd.none )
 
 
 type PathTree
@@ -162,15 +162,15 @@ pathFind character target arena =
 
         targetNode =
             exploredNodes
-                |> List.filter (\node -> (locationsEqual target node.location))
+                |> List.filter (\node -> locationsEqual target node.location)
                 |> List.head
     in
-        case targetNode of
-            Nothing ->
-                []
+    case targetNode of
+        Nothing ->
+            []
 
-            Just pathNode ->
-                tracePathBack pathNode exploredNodes []
+        Just pathNode ->
+            tracePathBack pathNode exploredNodes []
 
 
 tracePathBack : PathNode -> List PathNode -> Path -> Path
@@ -184,7 +184,7 @@ tracePathBack node exploredNodes currentPath =
                 prevLocation =
                     { x = node.location.x, y = node.location.y }
             in
-                tracePathBack pred exploredNodes (prevLocation :: currentPath)
+            tracePathBack pred exploredNodes (prevLocation :: currentPath)
 
 
 locationsEqual : Point -> Point -> Bool
@@ -201,7 +201,7 @@ exploreNodes openSet closedSet arena =
                 |> Maybe.withDefault { location = pointOrigin, cameFrom = Empty, cost = 9999 }
 
         neighbors =
-            (nodeNeighbors origin arena)
+            nodeNeighbors origin arena
                 |> List.filterMap (lowerCostNode closedSet)
 
         newOpenSet =
@@ -212,10 +212,11 @@ exploreNodes openSet closedSet arena =
         newClosedSet =
             origin :: closedSet
     in
-        if List.length openSet > 0 then
-            exploreNodes newOpenSet newClosedSet arena
-        else
-            newClosedSet
+    if List.length openSet > 0 then
+        exploreNodes newOpenSet newClosedSet arena
+
+    else
+        newClosedSet
 
 
 lowerCostNode : List PathNode -> PathNode -> Maybe PathNode
@@ -226,26 +227,27 @@ lowerCostNode closedSet neighborNode =
                 |> List.filter (\node -> locationsEqual neighborNode.location node.location)
                 |> List.head
     in
-        case matchingNode of
-            Nothing ->
+    case matchingNode of
+        Nothing ->
+            Just neighborNode
+
+        Just n ->
+            if n.cost > neighborNode.cost then
                 Just neighborNode
 
-            Just n ->
-                if n.cost > neighborNode.cost then
-                    Just neighborNode
-                else
-                    Nothing
+            else
+                Nothing
 
 
 nodeNeighbors : PathNode -> Arena -> List PathNode
 nodeNeighbors node arena =
     let
         grid =
-            List.Extra.lift2 (,) [ -1, 0, 1 ] [ -1, 0, 1 ]
+            List.Extra.lift2 (\a b -> ( a, b )) [ -1, 0, 1 ] [ -1, 0, 1 ]
                 |> List.filter (\( x, y ) -> x /= 0 || y /= 0)
                 |> List.map (\( x, y ) -> Point x y)
     in
-        List.filterMap (checkNode node arena) grid
+    List.filterMap (checkNode node arena) grid
 
 
 checkNode : PathNode -> Arena -> Point -> Maybe PathNode
@@ -256,30 +258,35 @@ checkNode node arena point =
             , y = node.location.y + point.y
             }
 
-        actualTerrain =
-            arenaTerrain arena actualLocation
     in
-        case actualTerrain of
-            Nothing ->
-                Nothing
+    arenaTerrain arena actualLocation
+        |> Maybe.andThen (terrainToCost actualLocation)
+        |> Maybe.map
+            (\cost ->
+                { location = actualLocation
+                , cameFrom = Predecessor node
+                , cost =
+                    node.cost + cost
+                }
+            )
 
-            Just Wall ->
-                Nothing
 
-            Just (Gr c) ->
-                let
-                    cost =
-                        if actualLocation.x /= 0 && actualLocation.y /= 0 then
-                            c * (sqrt 2)
-                        else
-                            c
-                in
-                    Just
-                        { location = actualLocation
-                        , cameFrom = Predecessor node
-                        , cost =
-                            node.cost + cost
-                        }
+terrainToCost : Point -> Terrain -> Maybe Float
+terrainToCost location terrain =
+    case terrain of
+        Wall ->
+            Nothing
+
+        Gr c ->
+            let
+                cost =
+                    if location.x /= 0 && location.y /= 0 then
+                        c * sqrt 2
+
+                    else
+                        c
+            in
+            Just cost
 
 
 arenaTerrain : Arena -> Point -> Maybe Terrain
@@ -291,7 +298,7 @@ arenaTerrain arena point =
         row =
             Array.get point.y arenaArray
     in
-        Maybe.andThen (Array.get point.x) row
+    Maybe.andThen (Array.get point.x) row
 
 
 
@@ -299,10 +306,8 @@ arenaTerrain arena point =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Time.every (1000 * millisecond) Advance
-        ]
+subscriptions _ =
+    Time.every 1000 Advance
 
 
 
@@ -311,7 +316,7 @@ subscriptions model =
 
 view : Model -> Html.Html Msg
 view model =
-    div [ style containerStyle ] ((arenaView model.arena) ++ (characterView model.character))
+    div containerStyle (arenaView model.arena ++ characterView model.character)
 
 
 
@@ -330,13 +335,13 @@ arenaRowView index row =
 
 arenaBlockView : Int -> Int -> Terrain -> Html Msg
 arenaBlockView row col terr =
-    div [ style (blockStyle (terrainColor terr)), (onClick (SetTarget col row)) ] [ text (blockLabel row col terr) ]
+    div (blockStyle (terrainColor terr) ++ [ onClick (SetTarget col row) ]) [ text (blockLabel row col terr) ]
 
 
 characterView : Character -> List (Html Msg)
 characterView char =
-    [ div [ style (characterStyle char) ] []
-    , div [ style (targetStyle char) ] []
+    [ div (characterStyle char) []
+    , div (targetStyle char) []
     ]
 
 
@@ -351,34 +356,34 @@ blockLabel row col terr =
             ""
 
         Gr cost ->
-            (toString col)
+            String.fromInt col
                 ++ "•"
-                ++ (toString row)
+                ++ String.fromInt row
                 ++ " ("
-                ++ (toString cost)
+                ++ String.fromFloat cost
                 ++ ")"
 
 
-containerStyle : List ( String, String )
+containerStyle : List (Html.Attribute msg)
 containerStyle =
-    [ ( "margin", "40px auto" )
-    , ( "width", "800px" )
-    , ( "height", "800px" )
-    , ( "backgroundColor", "gray" )
-    , ( "position", "relative" )
-    , ( "fontFamily", "sans-serif" )
-    , ( "color", "black" )
-    , ( "fontSize", "8px" )
+    [ style "margin" "40px auto"
+    , style "width" "800px"
+    , style "height" "800px"
+    , style "backgroundColor" "gray"
+    , style "position" "relative"
+    , style "fontFamily" "sans-serif"
+    , style "color" "black"
+    , style "fontSize" "8px"
     ]
 
 
-blockStyle : String -> List ( String, String )
+blockStyle : String -> List (Html.Attribute msg)
 blockStyle colorVal =
-    [ ( "width", "100px" )
-    , ( "height", "100px" )
-    , ( "backgroundColor", colorVal )
-    , ( "float", "left" )
-    , ( "outline", "1px solid slategray" )
+    [ style "width" "100px"
+    , style "height" "100px"
+    , style "backgroundColor" colorVal
+    , style "float" "left"
+    , style "outline" "1px solid slategray"
     ]
 
 
@@ -396,38 +401,38 @@ terrainColor terr =
                 offset =
                     20
             in
-                List.repeat 3 (base - n * offset)
-                    |> List.map toString
-                    |> String.join ", "
-                    |> \values -> "rgb(" ++ values ++ ")"
+            List.repeat 3 (base - n * offset)
+                |> List.map String.fromFloat
+                |> String.join ", "
+                |> (\values -> "rgb(" ++ values ++ ")")
 
 
-characterStyle : Character -> List ( String, String )
+characterStyle : Character -> List (Html.Attribute msg)
 characterStyle char =
-    [ ( "width", "80px" )
-    , ( "height", "80px" )
-    , ( "margin", "10px" )
-    , ( "position", "absolute" )
-    , ( "left", positionInPx char.location.x )
-    , ( "top", positionInPx char.location.y )
-    , ( "backgroundColor", "lightsalmon" )
-    , ( "borderRadius", "40px" )
-    , ( "boxShadow", "2px 2px 4px 1px salmon" )
-    , ( "transition", "top 1s, left 1s" )
+    [ style "width" "80px"
+    , style "height" "80px"
+    , style "margin" "10px"
+    , style "position" "absolute"
+    , style "left" (positionInPx char.location.x)
+    , style "top" (positionInPx char.location.y)
+    , style "backgroundColor" "lightsalmon"
+    , style "borderRadius" "40px"
+    , style "boxShadow" "2px 2px 4px 1px salmon"
+    , style "transition" "top 1s, left 1s"
     ]
 
 
-targetStyle : Character -> List ( String, String )
+targetStyle : Character -> List (Html.Attribute msg)
 targetStyle char =
-    [ ( "width", "20px" )
-    , ( "height", "20px" )
-    , ( "margin", "40px" )
-    , ( "position", "absolute" )
-    , ( "left", positionInPx char.target.x )
-    , ( "top", positionInPx char.target.y )
-    , ( "backgroundColor", "lightcoral" )
-    , ( "borderRadius", "3px" )
-    , ( "boxShadow", "2px 2px 4px 1px gray" )
+    [ style "width" "20px"
+    , style "height" "20px"
+    , style "margin" "40px"
+    , style "position" "absolute"
+    , style "left" (positionInPx char.target.x)
+    , style "top" (positionInPx char.target.y)
+    , style "backgroundColor" "lightcoral"
+    , style "borderRadius" "3px"
+    , style "boxShadow" "2px 2px 4px 1px gray"
     ]
 
 
@@ -442,9 +447,9 @@ sign num =
             0
 
         n ->
-            round (toFloat (n) / abs (toFloat (n)))
+            round (toFloat n / abs (toFloat n))
 
 
-positionInPx : number -> String
+positionInPx : Int -> String
 positionInPx position =
-    toString (position * 100) ++ "px"
+    String.fromInt (position * 100) ++ "px"
