@@ -1,4 +1,4 @@
-module Main exposing (Arena, Character, Model, Msg(..), Path, PathNode, PathTree(..), Point, Terrain(..), arenaBlockView, arenaRowView, arenaTerrain, arenaView, blockLabel, blockStyle, characterStyle, characterView, checkNode, containerStyle, exploreNodes, init, initArena, initCharacter, locationsEqual, lowerCostNode, main, nodeNeighbors, pathFind, pointOrigin, positionInPx, sign, subscriptions, targetStyle, terrainColor, tracePathBack, update, view)
+module Main exposing (main)
 
 import Array
 import Browser
@@ -257,7 +257,6 @@ checkNode node arena point =
             { x = node.location.x + point.x
             , y = node.location.y + point.y
             }
-
     in
     arenaTerrain arena actualLocation
         |> Maybe.andThen (terrainToCost actualLocation)
